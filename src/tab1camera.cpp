@@ -82,6 +82,8 @@ void Tab1Camera::slotReadData() {
         if (!img.empty()) {
             processFrame(senderClient, img);  // 수신한 프레임을 처리
         }
+
+        cam1_image = img.clone();
     }
 }
 
@@ -95,7 +97,9 @@ void Tab1Camera::processFrame(QTcpSocket *client, cv::Mat& frame) {
         return;
 
     // QImage로 변환
-    QImage qimg(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
+    cv::Mat rgbFrame;
+    cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
+    QImage qimg(rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
     // 고정된 클라이언트-라벨 매핑에 따라 출력
     if (clientLabelMap.contains(client) && !qimg.isNull()) {
@@ -117,4 +121,9 @@ void Tab1Camera::slotClientDisconnected() {
         else if (senderClient == clients[1])
             qDebug() << "CCTV2와 연결이 끊어졌습니다.";
     }
+}
+
+void Tab1Camera::slotCopyCam1Image(cv::Mat& mat)
+{
+    mat = cam1_image.clone();
 }

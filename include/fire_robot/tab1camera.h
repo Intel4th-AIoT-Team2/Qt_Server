@@ -23,6 +23,8 @@ public:
     explicit Tab1Camera(QWidget *parent = nullptr);
     ~Tab1Camera();
 
+    cv::Mat cam1_image;
+
 private:
     Ui::Tab1Camera *ui;
     QTcpServer *server;
@@ -34,6 +36,8 @@ private slots:
     void slotNewConnection();
     void slotReadData();
     void slotClientDisconnected();
+
+    void slotCopyCam1Image(cv::Mat&);
 };
 
 #endif // TAB2CAMERA_H

@@ -33,7 +33,7 @@ HEADERS += \
     include/fire_robot/rosnode.h \
     include/fire_robot/server.h \
     include/fire_robot/tab1camera.h \
-    include/fire_robot/tab2roscontrol.h \ \
+    include/fire_robot/tab2roscontrol.h \
     include/fire_robot/tab3mapping.h
 
 FORMS += \
