@@ -1,2 +1,6 @@
 # 다운로드
-*~/catkin_ws/src* 위치에서 git clone
+```bash
+cd ~/catkin_ws/src
+git clone https://github.com/Intel4th-AIoT-Team2/fire_robot.git
+cm
+```
