@@ -22,10 +22,10 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, Tab1Camera *tab1Camera, QW
     }
 
     imgServer = new QTcpServer(this);
-    if (!imgServer->listen(QHostAddress::Any, 5006)) {
-        qCritical() << "Unable to start server on port 5006:" << imgServer->errorString();
+    if (!imgServer->listen(QHostAddress::Any, 5010)) {
+        qCritical() << "Unable to start server on port 5010:" << imgServer->errorString();
     } else {
-        qDebug() << "Image server started on port 5006";
+        qDebug() << "Image server started on port 5010";
     }
 
     connect(ui->pushButtonGo, SIGNAL(clicked()),this, SLOT(goal_Pub()));
