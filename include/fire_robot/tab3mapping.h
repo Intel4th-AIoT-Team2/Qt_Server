@@ -15,6 +15,10 @@
 #include <QIODevice>
 #include <QStringList>
 #include <QTextStream>
+// fire message
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QtEndian>
 
 namespace Ui {
 class Tab3Mapping;
@@ -31,7 +35,10 @@ public:
 private:
     Ui::Tab3Mapping *ui;
 
-    cv::Mat cam_image;                      // 카메라 이미지
+    QString map_path = QDir::homePath().append("/map.png");
+
+    cv::Mat cam1_image;                     // CCTV1 이미지
+    cv::Mat cam2_image;                     // CCTV2 이미지
     cv::Mat map_image;                      // 지도 이미지
 
     /* 상태 변수 */
@@ -61,7 +68,11 @@ private:
 
     /* 상태 저장 */
     QList<std::vector<cv::Point2f>*> point_list;
-    QString config_path = "/home/ubuntu/aiot_map.csv";
+    QString config_path = QDir::homePath().append("/aiot_map.csv");
+
+    /* 화재 지점 수신 */
+    QTcpServer *server;
+    QTcpSocket *client;                     // 파이썬 추론 프로그램
 
     cv::Point2f test_point = cv::Point2f(0.0, 0.0);
 
@@ -79,6 +90,7 @@ private:
     void getPerspectiveTransform();
     void readConfig();
     void writeConfig();
+    QString convertPointToTurtle(cv::Point2f, int);
 
 private slots:
     void onBtnCam1SelectClicked();
@@ -87,8 +99,12 @@ private slots:
     void onBtnMapAreaSetClicked(bool);
     void onMapEdited();
 
+    void onClientConnect();
+    void readClientSocket();
+    void onClientDisconnected();
+
 public slots:
-    QString convertPointToTurtle(cv::Point2f, int);
+    void slotReceiveFirePoint(cv::Point2f, int);
 
 signals:
     void signalRequestCam1Image(cv::Mat&);

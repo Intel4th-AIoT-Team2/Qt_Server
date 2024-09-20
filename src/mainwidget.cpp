@@ -18,7 +18,10 @@ MainWidget::MainWidget(int argc, char** argv, QWidget *parent)
 
     ui->pTabWidget->setCurrentIndex(0);
 
+    // copy cam1 to tab3
     connect(pTab3Mapping, SIGNAL(signalRequestCam1Image(cv::Mat&)), pTab1Camera, SLOT(slotCopyCam1Image(cv::Mat&)));
+    // send goal message
+     connect(pTab3Mapping, SIGNAL(signalTargetFound(QString)), pTab2RosControl, SLOT(sendGoalMessage(QString)));
 }
 
 MainWidget::~MainWidget()

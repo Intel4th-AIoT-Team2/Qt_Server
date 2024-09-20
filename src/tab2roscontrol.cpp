@@ -16,7 +16,7 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, QWidget *parent) :
     if (!server->listen(QHostAddress::Any, 5001)) {
         qCritical() << "Unable to start server:" << server->errorString();
     } else {
-        qDebug() << "Server started on port 5000";
+        qDebug() << "Server started on port 5001";
     }
 
     connect(ui->pushButtonGo, SIGNAL(clicked()),this, SLOT(goal_Pub()));
@@ -96,6 +96,22 @@ void Tab2RosControl::sendData(/*QString data*/)
         qCritical() << "No client connected or socket not open!";
     }
 
+}
+void Tab2RosControl::sendGoalMessage(QString msg)
+{
+    if (clientSocket && clientSocket->isOpen())
+    {
+        qDebug() << "Goal message : " << msg;
+        clientSocket->write(msg.toUtf8());
+        QString clientInfo = QString("IP: %1, Port: %2")
+            .arg(clientSocket->peerAddress().toString())
+            .arg(clientSocket->peerPort());
+    }
+    else
+    {
+        qDebug() << "Message sent to client: failed";
+        qCritical() << "No client connected or socket not open!";
+    }
 }
 void Tab2RosControl::saveSocket(QTcpSocket* socket)
 {
