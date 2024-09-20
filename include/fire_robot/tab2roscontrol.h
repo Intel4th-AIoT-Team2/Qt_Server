@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTcpSocket>
+#include <QTcpServer>
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QProcess>
@@ -32,11 +33,13 @@ private:
     QButtonGroup *bg;
     QWidget *widget;
     Server *server;
-    QTcpSocket* clientSocket = nullptr;
+    QTcpSocket *clientSocket = nullptr;
     char msg = 0;
     Tab1Camera *m_tab1Camera;
     cv::Mat rosImg;
     int connectionCount = 0;
+    QTcpServer *imgServer;
+    QTcpSocket *imgClientSocket;
 
 private slots:
     void goal_Pub();
@@ -52,9 +55,11 @@ private slots:
     void sendGoalMessage(QString msg);
     void saveSocket(QTcpSocket*);
     void slotReadData();
+    void slotRosReadData();
     QByteArray matToQByteArray(const cv::Mat&);
     void sendImageViaTcp(QTcpSocket*, const cv::Mat&);
     void sendImageInChunks(QTcpSocket*, const cv::Mat&);
+    void slotNewImageConnection();
 
 signals:
     void signalRequestRosImage(cv::Mat&);
