@@ -24,6 +24,7 @@ public:
     ~Tab1Camera();
 
     cv::Mat cam1_image;
+    QTcpSocket* getClientSocket() const; // 소켓 접근 함수
 
 private:
     Ui::Tab1Camera *ui;
@@ -38,6 +39,7 @@ private slots:
     void slotClientDisconnected();
 
     void slotCopyCam1Image(cv::Mat&);
+
 };
 
 #endif // TAB2CAMERA_H

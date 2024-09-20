@@ -13,7 +13,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
     if (socket->setSocketDescriptor(socketDescriptor)) {
         connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
         emit newConnect(socket);
-        socket->write("Welcome to the server!\n");
+        //socket->write("Welcome to the server!\n");
 		qDebug() << "New client connected from:" << socket->peerAddress().toString();
     } else {
         delete socket;
