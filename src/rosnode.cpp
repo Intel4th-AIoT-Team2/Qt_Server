@@ -109,6 +109,8 @@ void RosNode::imageCallback(const sensor_msgs::ImageConstPtr& msg)
   cv::line(frame, cv::Point(frame.cols >> 1, (frame.rows >> 1) - 20), cv::Point(frame.cols >> 1, (frame.rows >> 1) + 20), cv::Scalar(255, 0, 0), 3);
   QImage * pImage = new QImage(frame.data, frame.cols, frame.rows, QImage::Format_RGB888);
   QImage repImage = pImage->scaled( pLcamView->height(),pLcamView->width(), Qt::KeepAspectRatio);
+  // qDebug() << "image";
+  copyImg = frame;
 
   pLcamView->setPixmap(QPixmap::fromImage(repImage));
 }
@@ -119,4 +121,18 @@ void RosNode::sendDataToRos(const std::string &dataToSend)
     msg.data = dataToSend;
 
     data_pub.publish(msg);
+}
+
+void RosNode::slotCopyRosImage(cv::Mat& mat)
+{
+    mat = copyImg.clone();
+/*
+    // 이미지 저장 경로를 지정합니다.
+    std::string savePath = "/home/ubuntu/rosImg.png";  // 원하는 파일 경로 및 이름
+    if (cv::imwrite(savePath, mat)) {
+        qDebug() << "Image successfully saved to:" << QString::fromStdString(savePath);
+    } else {
+        qDebug() << "Failed to save the image to:" << QString::fromStdString(savePath);
+    }
+*/
 }

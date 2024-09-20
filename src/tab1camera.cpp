@@ -127,3 +127,12 @@ void Tab1Camera::slotCopyCam1Image(cv::Mat& mat)
 {
     mat = cam1_image.clone();
 }
+
+QTcpSocket* Tab1Camera::getClientSocket() const {
+    // 클라이언트 리스트가 비어있지 않고 첫 번째 소켓이 유효한 경우
+    if (!clients.isEmpty() && clients[0] != nullptr) {
+        return clients[0];
+    }
+    // 그렇지 않다면 nullptr을 반환
+    return nullptr;
+}

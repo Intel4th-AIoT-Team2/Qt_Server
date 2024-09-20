@@ -37,6 +37,7 @@ private:
     int init_argc;
     char **init_argv;
     QString goal_topic;
+    cv::Mat copyImg;
     ros::Publisher set_pub;
     ros::Publisher goal_pub;
     ros::Publisher data_pub;
@@ -48,6 +49,10 @@ public:
 signals:
     void rosShutdown();
     void sigLdsReceive(float *);
+
+private slots:
+    void slotCopyRosImage(cv::Mat&);
+
 };
 
 #endif
