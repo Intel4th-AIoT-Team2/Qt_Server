@@ -123,16 +123,10 @@ void RosNode::sendDataToRos(const std::string &dataToSend)
     data_pub.publish(msg);
 }
 
+/*
+    imageCallBack 함수에서 이미지 1프레임 복사
+*/
 void RosNode::slotCopyRosImage(cv::Mat& mat)
 {
     mat = copyImg.clone();
-/*
-    // 이미지 저장 경로를 지정합니다.
-    std::string savePath = "/home/ubuntu/rosImg.png";  // 원하는 파일 경로 및 이름
-    if (cv::imwrite(savePath, mat)) {
-        qDebug() << "Image successfully saved to:" << QString::fromStdString(savePath);
-    } else {
-        qDebug() << "Failed to save the image to:" << QString::fromStdString(savePath);
-    }
-*/
 }

@@ -13,12 +13,19 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, Tab1Camera *tab1Camera, QW
     prosNode->start();
 
     // Server setup
-    // 잘못된 IP에 연결될 경우, 세그멘테이션 오류(코어 덤프)가 발생할 수 있기에 IP지정함
+    // 잘못된 IP에 연결될 경우, 세그멘테이션 오류(코어 덤프)가 발생할 수 있기에 IP지정함 -> Port 번호 변경으로 해결.
     server = new Server(this);
     if (!server->listen(QHostAddress::Any, 5001)) {   // ROS IP : 192.168.100.108
         qCritical() << "Unable to start server:" << server->errorString();
     } else {
         qDebug() << "Server started on port 5001";
+    }
+
+    imgServer = new QTcpServer(this);
+    if (!imgServer->listen(QHostAddress::Any, 5006)) {
+        qCritical() << "Unable to start server on port 5006:" << imgServer->errorString();
+    } else {
+        qDebug() << "Image server started on port 5006";
     }
 
     connect(ui->pushButtonGo, SIGNAL(clicked()),this, SLOT(goal_Pub()));
@@ -32,6 +39,7 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, Tab1Camera *tab1Camera, QW
 
     connect(this, SIGNAL(signalRequestRosImage(cv::Mat&)), prosNode, SLOT(slotCopyRosImage(cv::Mat&)));
     connect(server, SIGNAL(newConnect(QTcpSocket*)), this, SLOT(saveSocket(QTcpSocket*)));
+    connect(imgServer, SIGNAL(newConnection()), this, SLOT(slotNewImageConnection()));
 //    connect(server, SIGNAL(newConnect()), this, [this](QTcpSocket *newSocket) {
 //        clientSocket = newSocket; // 클라이언트 소켓 저장
 //    });
@@ -78,24 +86,13 @@ void Tab2RosControl::slotLdsReceive(float *pscanData)
     ui->lcdNumber3->display(pscanData[2]);
     ui->lcdNumber4->display(pscanData[3]);
 }
-
-void Tab2RosControl::sendData(/*QString data*/)
+void Tab2RosControl::sendBuzzerOff()
 {
-    qDebug() << "BtnClick";
+    qDebug() << "sendBuzzerOff";
 
     QTcpSocket* clientSocket = m_tab1Camera->getClientSocket();
 
-    QString message;
-    if(msg)
-    {
-        message = "buzzer_off";
-        msg = 0;
-    }
-    else
-    {
-        message = "buzzer_on";
-        msg = 1;
-    }
+    QString message = "buzzer_off";
 
     // 소켓이 존재하고 열려 있는지 확인
     if (!clientSocket) {
@@ -108,8 +105,33 @@ void Tab2RosControl::sendData(/*QString data*/)
         return;
     }
 
+    clientSocket->write(message.toUtf8());
+
+    qDebug() << "Message sent to client:" << message;
+
+    // 클라이언트의 IP 주소와 포트 번호를 가져옵니다.
+    QString clientInfo = QString("IP: %1, Port: %2")
+        .arg(clientSocket->peerAddress().toString())
+        .arg(clientSocket->peerPort());
+
+    qDebug() << "Message sent to client:" << message << "->" << clientInfo;
+}
+
+void Tab2RosControl::sendData(/*QString data*/)
+{
+    // 소켓이 존재하고 열려 있는지 확인
+    if (!clientSocket) {
+        qCritical() << "Client socket does not exist.";
+        return;
+    }
+
+    if (!clientSocket->isOpen()) {
+        qCritical() << "Client socket is not open.";
+        return;
+    }
+
     // 소켓이 정상적으로 연결되어 있는 경우
-    // QString message = "[18]GOAL@2@4@1@1";
+    QString message = "[18]GOAL@-1.2@-5.4";
     clientSocket->write(message.toUtf8());
     qDebug() << "Message sent to client:" << message;
 
@@ -119,27 +141,6 @@ void Tab2RosControl::sendData(/*QString data*/)
         .arg(clientSocket->peerPort());
 
     qDebug() << "Message sent to client:" << message << "->" << clientInfo;
-
-/*
-    qDebug() << "BtnClick";
-    //data = "10@20.1@30.2";
-    //prosNode->sendDataToRos(data.toStdString());
-	if (clientSocket && clientSocket->isOpen()) {
-        // QString message = "Message from the button click!";
-        QString message = "[18]GOAL@2@4@1@1";
-        clientSocket->write(message.toUtf8());
-        qDebug() << "Message sent to client:" << message;
-		// 클라이언트의 IP 주소와 포트 번호를 가져옵니다.
-        QString clientInfo = QString("IP: %1, Port: %2")
-            .arg(clientSocket->peerAddress().toString())
-            .arg(clientSocket->peerPort());
-
-        qDebug() << "Message sent to client:" << message << "->" << clientInfo;
-    } else {
-        qDebug() << "Message sent to client: failed";
-        qCritical() << "No client connected or socket not open!";
-    }
-*/
 }
 
 void Tab2RosControl::sendGoalMessage(QString msg)
@@ -162,12 +163,15 @@ void Tab2RosControl::sendGoalMessage(QString msg)
 void Tab2RosControl::saveSocket(QTcpSocket* socket)
 {
     clientSocket = socket;
-    connect(clientSocket, SIGNAL(readyRead()), this, SLOT(slotReadData()));
+    connect(clientSocket, SIGNAL(readyRead()), this, SLOT(slotRosReadData()));
 }
 
+// cv::Mat png 형식으로 인코딩 -> 바이트 배열로 변환
 QByteArray Tab2RosControl::matToQByteArray(const cv::Mat& image) {
+    cv::Mat rgbImage;
     std::vector<uchar> buffer;
-    cv::imencode(".png", image, buffer); // PNG 형식으로 인코딩
+    cv::cvtColor(image, rgbImage, cv::COLOR_BGR2RGB);
+    cv::imencode(".jpg", rgbImage, buffer); // JPG 형식으로 인코딩
     return QByteArray(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 }
 
@@ -229,28 +233,17 @@ void Tab2RosControl::sendImageInChunks(QTcpSocket *socket, const cv::Mat &image)
 
     qDebug() << "Total image sent with size:" << totalSize << "bytes.";
 }
-/*
-void Tab2RosControl::slotReadData() {
-    if (!clientSocket) {
-        qCritical() << "Client socket is not available.";
-        return;
-    }
 
-    QByteArray data = clientSocket->readAll();
-    qDebug() << "Data received from client:" << data;
+void Tab2RosControl::slotNewImageConnection() {
+    imgClientSocket = imgServer->nextPendingConnection();
 
-    if (data.trimmed() == "IMG")
-    {
-        emit signalRequestRosImage(rosImg);
+    connect(imgClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadData()));
+    connect(imgClientSocket, SIGNAL(disconnected()), imgClientSocket, SLOT(deleteLater()));
 
-        sendImageViaTcp(clientSocket, rosImg);
-        //sendImageInChunks(clientSocket, rosImg);
-    }
+    qDebug() << "New image client connected from" << imgClientSocket->peerAddress().toString();
 }
-*/
 
-
-void Tab2RosControl::slotReadData() {
+void Tab2RosControl::slotRosReadData() {
     if (!clientSocket) {
         qCritical() << "Client socket is not available.";
         return;
@@ -259,31 +252,38 @@ void Tab2RosControl::slotReadData() {
     // 데이터 읽기
     QByteArray data = clientSocket->readAll();
     qDebug() << "Data received from client:" << data;
+    if (data.trimmed() == "extinguish finished")
+    {
+        sendBuzzerOff();
+    }
+}
+
+void Tab2RosControl::slotReadData() {
+    if (!imgClientSocket) {
+        qCritical() << "Client socket is not available.";
+        return;
+    }
+
+    // 데이터 읽기
+    QByteArray data = imgClientSocket->readAll();
+    qDebug() << "Data received from client:" << data;
+    if (data.trimmed() == "extinguish finished")
+    {
+        sendBuzzerOff();
+    }
 
     if (data.trimmed() == "IMG")
     {
-        //rosImg = prosNode->slotCopyRosImage(rosImg);
+        // 해당 시그널 발생 시 -> rosImg에 이미지 1 프레임 복사함
         emit signalRequestRosImage(rosImg);
 
-//        QString command = "scp /home/ubuntu/rosImg.png jetson@192.168.100.108:/home/jetson/final_code/img/";
-//        QProcess process;
-//        process.start(command);
-
-//        // 프로세스가 완료될 때까지 기다립니다.
-//        if (!process.waitForFinished()) {
-//            qDebug() << "Process did not finish.";
-//            return;
-//        }
-
-
-
         // 소켓이 존재하고 열려 있는지 확인
-        if (!clientSocket) {
+        if (!imgClientSocket) {
             qCritical() << "Client socket does not exist.";
             return;
         }
 
-        if (!clientSocket->isOpen()) {
+        if (!imgClientSocket->isOpen()) {
             qCritical() << "Client socket is not open.";
             return;
         }
@@ -291,20 +291,38 @@ void Tab2RosControl::slotReadData() {
         QByteArray imgData = matToQByteArray(rosImg);
 
         // 이미지 바이너리 전송
-        clientSocket->write(imgData);
-        clientSocket->flush();
+        imgClientSocket->write(imgData);
+        imgClientSocket->flush();
 
         qDebug() << "Image sent with size:" << imgData.size() << "bytes.";
         qDebug() << "Image sent to client.";
 
         // 데이터 전송 완료 후 소켓 연결 해제
-        clientSocket->disconnectFromHost();
+        imgClientSocket->disconnectFromHost();
 
-        if (clientSocket->state() == QAbstractSocket::UnconnectedState || clientSocket->waitForDisconnected(3000)) {
+        if (imgClientSocket->state() == QAbstractSocket::UnconnectedState || imgClientSocket->waitForDisconnected(3000)) {
             qDebug() << "Socket successfully disconnected.";
         } else {
             qCritical() << "Socket disconnect failed.";
         }
+
+/*
+        // Increment the connection count
+        connectionCount++;
+
+        // Disconnect the socket after first two data transmissions
+        if (connectionCount < 3) {
+            clientSocket->disconnectFromHost();
+            if (clientSocket->state() == QAbstractSocket::UnconnectedState || clientSocket->waitForDisconnected(3000)) {
+                qDebug() << "Socket successfully disconnected.";
+            } else {
+                qCritical() << "Socket disconnect failed.";
+            }
+        } else {
+            qDebug() << "Keeping the connection open after third data transmission.";
+            connectionCount = 0;
+        }
+*/
     }
 }
 
