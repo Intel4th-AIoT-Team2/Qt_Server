@@ -78,6 +78,36 @@ void Tab2RosControl::slotLdsReceive(float *pscanData)
     ui->lcdNumber3->display(pscanData[2]);
     ui->lcdNumber4->display(pscanData[3]);
 }
+void Tab2RosControl::sendBuzzerOff()
+{
+    qDebug() << "sendBuzzerOff";
+
+    QTcpSocket* clientSocket = m_tab1Camera->getClientSocket();
+
+    QString message = "buzzer_off";
+
+    // 소켓이 존재하고 열려 있는지 확인
+    if (!clientSocket) {
+        qCritical() << "Client socket does not exist.";
+        return;
+    }
+
+    if (!clientSocket->isOpen()) {
+        qCritical() << "Client socket is not open.";
+        return;
+    }
+
+    clientSocket->write(message.toUtf8());
+
+    qDebug() << "Message sent to client:" << message;
+
+    // 클라이언트의 IP 주소와 포트 번호를 가져옵니다.
+    QString clientInfo = QString("IP: %1, Port: %2")
+        .arg(clientSocket->peerAddress().toString())
+        .arg(clientSocket->peerPort());
+
+    qDebug() << "Message sent to client:" << message << "->" << clientInfo;
+}
 
 void Tab2RosControl::sendData(/*QString data*/)
 {
@@ -259,6 +289,10 @@ void Tab2RosControl::slotReadData() {
     // 데이터 읽기
     QByteArray data = clientSocket->readAll();
     qDebug() << "Data received from client:" << data;
+    if (data.trimmed() == "done")
+    {
+        sendBuzzerOff();
+    }
 
     if (data.trimmed() == "IMG")
     {

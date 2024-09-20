@@ -47,6 +47,7 @@ private slots:
     void set_Pub();
     void slotLdsReceive(float *);
     void sendData(/*QString*/);
+    void sendBuzzerOff();
     void sendGoalMessage(QString msg);
     void saveSocket(QTcpSocket*);
     void slotReadData();
