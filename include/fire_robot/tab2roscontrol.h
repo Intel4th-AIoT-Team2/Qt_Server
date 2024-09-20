@@ -36,6 +36,7 @@ private:
     char msg = 0;
     Tab1Camera *m_tab1Camera;
     cv::Mat rosImg;
+    int connectionCount = 0;
 
 private slots:
     void goal_Pub();

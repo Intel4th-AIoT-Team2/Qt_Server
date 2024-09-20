@@ -264,7 +264,7 @@ void Tab2RosControl::slotReadData() {
 
         qDebug() << "Image sent with size:" << imgData.size() << "bytes.";
         qDebug() << "Image sent to client.";
-
+/*
         // 데이터 전송 완료 후 소켓 연결 해제
         clientSocket->disconnectFromHost();
 
@@ -272,6 +272,22 @@ void Tab2RosControl::slotReadData() {
             qDebug() << "Socket successfully disconnected.";
         } else {
             qCritical() << "Socket disconnect failed.";
+        }
+*/
+        // Increment the connection count
+        connectionCount++;
+
+        // Disconnect the socket after first two data transmissions
+        if (connectionCount < 3) {
+            clientSocket->disconnectFromHost();
+            if (clientSocket->state() == QAbstractSocket::UnconnectedState || clientSocket->waitForDisconnected(3000)) {
+                qDebug() << "Socket successfully disconnected.";
+            } else {
+                qCritical() << "Socket disconnect failed.";
+            }
+        } else {
+            qDebug() << "Keeping the connection open after third data transmission.";
+            connectionCount = 0;
         }
     }
 }
