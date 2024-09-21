@@ -22,8 +22,8 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
     turtle1_points.push_back(cv::Point2f(1.75, -6.18));     // Bottom-Right
     turtle1_points.push_back(cv::Point2f(-1.2, -5.4));      // Bottom-Left
 
-    // TODO: cam_image에는 선택한 카메라의 이미지(1장)가 표시되어야 함
     map_image = cv::imread(map_path.toStdString());
+    drawCorners();
 
     ui->labelCamView->installEventFilter(this);
     ui->labelMapView->installEventFilter(this);
@@ -633,8 +633,7 @@ void Tab3Mapping::slotReceiveFirePoint(cv::Point2f fire, int cam)
     }
     else
     {
-        // TODO: 실제 좌표 보내기
-//        emit signalTargetFound(convertPointToTurtle(fire, cam));
+        emit signalTargetFound(convertPointToTurtle(fire, cam));
         qDebug().noquote() << currentTime() << convertPointToTurtle(fire, cam);
         is_turtle_busy = true;
     }
