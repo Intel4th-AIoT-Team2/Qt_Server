@@ -17,10 +17,10 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
     point_list.append(&map_turtle1_points);
 
     // 터틀봇1 좌표
-    turtle1_points.push_back(cv::Point2f(-0.6, -1.44));     // Top-Left
-    turtle1_points.push_back(cv::Point2f(1.7, -1.57));      // Top-Right
-    turtle1_points.push_back(cv::Point2f(1.75, -6.18));     // Bottom-Right
-    turtle1_points.push_back(cv::Point2f(-1.2, -5.4));      // Bottom-Left
+    turtle1_points.push_back(cv::Point2f(-0.84, -1.3));     // Top-Left
+    turtle1_points.push_back(cv::Point2f(2.0, -1.18));      // Top-Right
+    turtle1_points.push_back(cv::Point2f(2.0, -6.3));     // Bottom-Right
+    turtle1_points.push_back(cv::Point2f(-0.96, -6.37));      // Bottom-Left
 
     map_image = cv::imread(map_path.toStdString());
     drawCorners();
@@ -498,11 +498,11 @@ void Tab3Mapping::onBtnCam1SelectClicked()
     {
         current_cam = 1;
         drawCorners();
-        ui->labelInfoText->setText(QString("카메라%1이(가) 선택되었습니다.").arg(current_cam));
+        ui->labelInfoText->setText("카메라1이(가) 선택되었습니다.");
     }
     else
     {
-        ui->labelInfoText->setText(QString("카메라%1 이미지를 가져올 수 없습니다.").arg(current_cam));
+        ui->labelInfoText->setText("카메라1 이미지를 가져올 수 없습니다.");
     }
 }
 
@@ -517,11 +517,11 @@ void Tab3Mapping::onBtnCam2SelectClicked()
     {
         current_cam = 2;
         drawCorners();
-        ui->labelInfoText->setText(QString("카메라%1이(가) 선택되었습니다.").arg(current_cam));
+        ui->labelInfoText->setText("카메라2이(가) 선택되었습니다.");
     }
     else
     {
-        ui->labelInfoText->setText(QString("카메라%1 이미지를 가져올 수 없습니다.").arg(current_cam));
+        ui->labelInfoText->setText("카메라2 이미지를 가져올 수 없습니다.");
     }
 }
 
