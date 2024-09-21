@@ -46,37 +46,6 @@ void RosNode::run()
     }
     emit rosShutdown();
 }
-void RosNode::set_goal(QString frame, double x, double y, double z, double w) {
-  geometry_msgs::PoseStamped goal;
-  ros::Rate loop_rate(10);
-
-  goal.header.frame_id = frame.toStdString();
-
-  goal.header.stamp = ros::Time::now();
-  goal.pose.position.x = x;
-  goal.pose.position.y = y;
-  goal.pose.position.z = 0;
-  goal.pose.orientation.z = z;
-  goal.pose.orientation.w = w;
-
-  set_pub.publish(goal);
-}
-
-void RosNode::go_goal(QString frame, double x, double y, double z, double w) {
-  geometry_msgs::PoseStamped goal;
-
-  goal.header.frame_id = frame.toStdString();
-
-  goal.header.stamp = ros::Time::now();
-  goal.pose.position.x = x;
-  goal.pose.position.y = y;
-  goal.pose.position.z = 0;
-  goal.pose.orientation.z = z;
-  goal.pose.orientation.w = w;
-
-  goal_pub.publish(goal);
-
-}
 
 void RosNode::LDSMsgCallback(const sensor_msgs::LaserScan::ConstPtr &msg)
 {

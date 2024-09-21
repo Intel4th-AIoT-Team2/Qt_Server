@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,1,6,1">
+    <layout class="QVBoxLayout" name="verticalLayout" stretch="1,6,1">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -64,61 +64,6 @@
           <double>0.000000000000000</double>
          </property>
         </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QPushButton" name="pPBStudy">
-         <property name="text">
-          <string>서재</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pPBFront">
-         <property name="text">
-          <string>현관</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pPBLiving">
-         <property name="text">
-          <string>거실</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pPBedroom">
-         <property name="text">
-          <string>침실</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QPushButton" name="pushButtonGo">
-         <property name="text">
-          <string>GO</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox1"/>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox2"/>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox3"/>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox4"/>
        </item>
       </layout>
      </item>
