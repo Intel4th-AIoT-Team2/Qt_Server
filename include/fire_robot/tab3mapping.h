@@ -20,6 +20,8 @@
 #include <QTcpSocket>
 #include <QtEndian>
 
+#include <QDateTime>
+
 namespace Ui {
 class Tab3Mapping;
 }
@@ -91,6 +93,8 @@ private:
     bool readConfig();
     void writeConfig();
     QString convertPointToTurtle(cv::Point2f, int);
+
+    QString currentTime();
 
 private slots:
     void onBtnCam1SelectClicked();

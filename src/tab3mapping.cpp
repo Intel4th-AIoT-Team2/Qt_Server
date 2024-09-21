@@ -33,6 +33,7 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
     server = new QTcpServer(this);
     server->listen(QHostAddress::Any, 5020);
     connect(server, SIGNAL(newConnection()), this, SLOT(onClientConnect()));
+    qDebug().noquote() << currentTime() << "YOLO client listen on port 5020";
 
     connect(ui->btnCamMapConnect, SIGNAL(clicked(bool)), this, SLOT(onBtnCamMapConnectClicked(bool)));
     connect(ui->btnMapAreaSet, SIGNAL(clicked(bool)), this, SLOT(onBtnMapAreaSetClicked(bool)));
@@ -564,7 +565,7 @@ void Tab3Mapping::onClientConnect()
     connect(newClient, SIGNAL(readyRead()), this, SLOT(readClientSocket()));
     connect(newClient, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
 
-    qDebug() << "Python client connected";
+    qDebug().noquote() << currentTime() << "Python client connected";
 }
 
 /* SLOT : 소켓으로부터 데이터 읽기 */
@@ -611,7 +612,7 @@ void Tab3Mapping::onClientDisconnected()
     if (sender_client)
     {
         sender_client->deleteLater();
-        qDebug() << "Python client disconnected";
+        qDebug().noquote() << currentTime() << "Python client disconnected";
     }
 }
 
@@ -620,21 +621,21 @@ void Tab3Mapping::slotReceiveFirePoint(cv::Point2f fire, int cam)
 {
     if (is_turtle_busy)
     {
-        qDebug() << "Received fire point, but turtlebot is busy now.";
+        qDebug().noquote() << currentTime() << "Received fire point, but turtlebot is busy now.";
     }
     else if (cam == 1 && !isMappingDone(1))
     {
-        qDebug() << "Received fire point, but cam1 is not mapped.";
+        qDebug().noquote() << currentTime() << "Received fire point, but cam1 is not mapped.";
     }
     else if (cam == 2 && !isMappingDone(2))
     {
-        qDebug() << "Received fire point, but cam2 is not mapped.";
+        qDebug().noquote() << currentTime() << "Received fire point, but cam2 is not mapped.";
     }
     else
     {
         // TODO: 실제 좌표 보내기
 //        emit signalTargetFound(convertPointToTurtle(fire, cam));
-        qDebug() << convertPointToTurtle(fire, cam);
+        qDebug().noquote() << currentTime() << convertPointToTurtle(fire, cam);
         is_turtle_busy = true;
     }
 }
@@ -643,4 +644,11 @@ void Tab3Mapping::slotReceiveFirePoint(cv::Point2f fire, int cam)
 void Tab3Mapping::slotReceiveFinishMessage()
 {
     is_turtle_busy = false;
+}
+
+QString Tab3Mapping::currentTime()
+{
+    QDateTime date_time = QDateTime::currentDateTime();
+
+    return date_time.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
 }
