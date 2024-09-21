@@ -246,13 +246,13 @@ void Tab2RosControl::slotRosReadData()
     // 데이터 읽기
     QByteArray data = clientSocket->readAll();
     qDebug() << "받은 데이터 : " << data;
-    if (data.trimmed() == "extinguish finished")
+    if (data.trimmed() == "Situation Over!")
     {
         emit sigFireFinish();
         sendBuzzerOff();
     }
 }
-
+// ROS 이미지 전송 슬롯
 void Tab2RosControl::slotReadData()
 {
     // 소켓이 존재하고 열려 있는지 확인
