@@ -86,6 +86,36 @@ void Tab2RosControl::slotLdsReceive(float *pscanData)
     ui->lcdNumber3->display(pscanData[2]);
     ui->lcdNumber4->display(pscanData[3]);
 }
+void Tab2RosControl::sendBuzzerOn(QString temp)
+{
+    qDebug() << "sendBuzzerOn";
+
+    QTcpSocket* clientSocket = m_tab1Camera->getClientSocket();
+
+    QString message = "buzzer_on";
+
+    // 소켓이 존재하고 열려 있는지 확인
+    if (!clientSocket) {
+        qCritical() << "Client socket does not exist.";
+        return;
+    }
+
+    if (!clientSocket->isOpen()) {
+        qCritical() << "Client socket is not open.";
+        return;
+    }
+
+    clientSocket->write(message.toUtf8());
+
+    qDebug() << "Message sent to client:" << message;
+
+    // 클라이언트의 IP 주소와 포트 번호를 가져옵니다.
+    QString clientInfo = QString("IP: %1, Port: %2")
+        .arg(clientSocket->peerAddress().toString())
+        .arg(clientSocket->peerPort());
+
+    qDebug() << "Message sent to client:" << message << "->" << clientInfo;
+}
 void Tab2RosControl::sendBuzzerOff()
 {
     qDebug() << "sendBuzzerOff";
@@ -202,14 +232,16 @@ void Tab2RosControl::sendImageViaTcp(QTcpSocket *socket, const cv::Mat &image) {
 }
 
 void Tab2RosControl::sendImageInChunks(QTcpSocket *socket, const cv::Mat &image) {
-    if (!socket || !socket->isOpen()) {
+    if (!socket || !socket->isOpen())
+    {
         qCritical() << "Socket is not available or not open.";
         return;
     }
 
     // 1. 이미지 인코딩
     std::vector<uchar> buffer;
-    if (!cv::imencode(".png", image, buffer)) {
+    if (!cv::imencode(".png", image, buffer))
+    {
         qCritical() << "Failed to encode image.";
         return;
     }
@@ -220,7 +252,7 @@ void Tab2RosControl::sendImageInChunks(QTcpSocket *socket, const cv::Mat &image)
     quint32 chunkSize = std::ceil(static_cast<float>(totalSize) / chunkCount);
 
     // 3. 각 청크로 데이터를 나누어 보냅니다.
-    for (int i = 0; i < chunkCount; ++i) {
+    for (int i = 0; i < chunkCount; ++i){
         quint32 startIdx = i * chunkSize;
         quint32 endIdx = std::min(startIdx + chunkSize, totalSize);
         QByteArray chunkData = QByteArray::fromRawData(reinterpret_cast<const char*>(buffer.data() + startIdx), endIdx - startIdx);
@@ -234,7 +266,8 @@ void Tab2RosControl::sendImageInChunks(QTcpSocket *socket, const cv::Mat &image)
     qDebug() << "Total image sent with size:" << totalSize << "bytes.";
 }
 
-void Tab2RosControl::slotNewImageConnection() {
+void Tab2RosControl::slotNewImageConnection()
+{
     imgClientSocket = imgServer->nextPendingConnection();
 
     connect(imgClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadData()));
@@ -243,8 +276,10 @@ void Tab2RosControl::slotNewImageConnection() {
     qDebug() << "New image client connected from" << imgClientSocket->peerAddress().toString();
 }
 
-void Tab2RosControl::slotRosReadData() {
-    if (!clientSocket) {
+void Tab2RosControl::slotRosReadData()
+{
+    if (!clientSocket)
+    {
         qCritical() << "Client socket is not available.";
         return;
     }
@@ -254,12 +289,15 @@ void Tab2RosControl::slotRosReadData() {
     qDebug() << "Data received from client:" << data;
     if (data.trimmed() == "extinguish finished")
     {
+        emit sigFireFinish();
         sendBuzzerOff();
     }
 }
 
-void Tab2RosControl::slotReadData() {
-    if (!imgClientSocket) {
+void Tab2RosControl::slotReadData()
+{
+    if (!imgClientSocket)
+    {
         qCritical() << "Client socket is not available.";
         return;
     }
@@ -278,12 +316,14 @@ void Tab2RosControl::slotReadData() {
         emit signalRequestRosImage(rosImg);
 
         // 소켓이 존재하고 열려 있는지 확인
-        if (!imgClientSocket) {
+        if (!imgClientSocket)
+        {
             qCritical() << "Client socket does not exist.";
             return;
         }
 
-        if (!imgClientSocket->isOpen()) {
+        if (!imgClientSocket->isOpen())
+        {
             qCritical() << "Client socket is not open.";
             return;
         }
@@ -300,29 +340,13 @@ void Tab2RosControl::slotReadData() {
         // 데이터 전송 완료 후 소켓 연결 해제
         imgClientSocket->disconnectFromHost();
 
-        if (imgClientSocket->state() == QAbstractSocket::UnconnectedState || imgClientSocket->waitForDisconnected(3000)) {
+        if (imgClientSocket->state() == QAbstractSocket::UnconnectedState || imgClientSocket->waitForDisconnected(3000))
+        {
             qDebug() << "Socket successfully disconnected.";
-        } else {
+        } else
+        {
             qCritical() << "Socket disconnect failed.";
         }
-
-/*
-        // Increment the connection count
-        connectionCount++;
-
-        // Disconnect the socket after first two data transmissions
-        if (connectionCount < 3) {
-            clientSocket->disconnectFromHost();
-            if (clientSocket->state() == QAbstractSocket::UnconnectedState || clientSocket->waitForDisconnected(3000)) {
-                qDebug() << "Socket successfully disconnected.";
-            } else {
-                qCritical() << "Socket disconnect failed.";
-            }
-        } else {
-            qDebug() << "Keeping the connection open after third data transmission.";
-            connectionCount = 0;
-        }
-*/
     }
 }
 

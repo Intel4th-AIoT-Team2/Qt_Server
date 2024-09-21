@@ -60,9 +60,11 @@ private slots:
     void sendImageViaTcp(QTcpSocket*, const cv::Mat&);
     void sendImageInChunks(QTcpSocket*, const cv::Mat&);
     void slotNewImageConnection();
+    void sendBuzzerOn(QString);
 
 signals:
     void signalRequestRosImage(cv::Mat&);
+    void sigFireFinish();
 };
 
 #endif // TAB2ROSCONTROL_H
