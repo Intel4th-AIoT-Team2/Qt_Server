@@ -37,14 +37,14 @@ private:
 
     QString map_path = QDir::homePath().append("/map.png");
 
-    cv::Mat cam1_image;                     // CCTV1 이미지
-    cv::Mat cam2_image;                     // CCTV2 이미지
+    cv::Mat cam_image;                     // CCTV 이미지
     cv::Mat map_image;                      // 지도 이미지
 
     /* 상태 변수 */
     int current_cam = 1;                    // 현재 선택된 카메라
     bool active_cam_click = false;          // 카메라 좌표 선택 모드
     bool active_map_click = false;          // 지도 좌표 선택 모드
+    bool is_turtle_busy = false;            // 터틀봇 작동 상태
 
     /* 이벤트 플래그 */
     bool cam_map_connect_event_flag = false;
@@ -78,7 +78,7 @@ private:
 
 public:
     bool isCamMapReady(int);                // 카메라-지도 변환의 모서리가 설정 되었는지 여부
-    bool isMappingDone();                   // 모든 설정이 완료되어 좌표 전송이 준비된 상태의 여부
+    bool isMappingDone(int);                // 모든 설정이 완료되어 좌표 전송이 준비된 상태의 여부
 
 private:
     bool eventFilter(QObject*, QEvent*);
@@ -88,7 +88,7 @@ private:
     void updateImageView(cv::Mat&, QLabel*);
     void drawCorners();
     void getPerspectiveTransform();
-    void readConfig();
+    bool readConfig();
     void writeConfig();
     QString convertPointToTurtle(cv::Point2f, int);
 
@@ -97,6 +97,7 @@ private slots:
     void onBtnCam2SelectClicked();
     void onBtnCamMapConnectClicked(bool);
     void onBtnMapAreaSetClicked(bool);
+    void onBtnRestoreSettingClicked();
     void onMapEdited();
 
     void onClientConnect();
@@ -105,9 +106,10 @@ private slots:
 
 public slots:
     void slotReceiveFirePoint(cv::Point2f, int);
+    void slotReceiveFinishMessage();
 
 signals:
-    void signalRequestCam1Image(cv::Mat&);
+    void signalRequestCamImage(cv::Mat&, int, bool&);
     void signalTargetFound(QString);
     void signalMapEdited();
 };
