@@ -30,8 +30,6 @@ public:
 private:
     Ui::Tab2RosControl *ui;
     RosNode *prosNode;
-    QButtonGroup *bg;
-    QWidget *widget;
     Server *server;
     QTcpSocket *clientSocket = nullptr;
     char msg = 0;
@@ -42,15 +40,8 @@ private:
     QTcpSocket *imgClientSocket;
 
 private slots:
-    void goal_Pub();
-    void goal_PubSlot(double, double, double, double);
-    void goal_Pub_Front();
-    void goal_Pub_Living();
-    void goal_Pub_Study();
-    void goal_Pub_Bedroom();
-    void set_Pub();
     void slotLdsReceive(float *);
-    void sendData(/*QString*/);
+    void sendData();
     void sendBuzzerOff();
     void sendGoalMessage(QString msg);
     void saveSocket(QTcpSocket*);

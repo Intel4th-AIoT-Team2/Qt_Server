@@ -27,8 +27,6 @@ public:
     bool init();
     void run();
     void startHandle();
-    void set_goal(QString frame, double x, double y, double z, double w);
-    void go_goal(QString frame, double x, double y, double z, double w);
     void LDSMsgCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
     void imageCallback(const sensor_msgs::ImageConstPtr& msg);
     void sendDataToRos(const std::string& dataToSend);
