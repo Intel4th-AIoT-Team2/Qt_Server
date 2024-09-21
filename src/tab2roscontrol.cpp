@@ -173,6 +173,7 @@ void Tab2RosControl::sendData(/*QString data*/)
     qDebug() << "Message sent to client:" << message << "->" << clientInfo;
 }
 
+/* SLOT : 터틀봇에 목표 좌표 전송 */
 void Tab2RosControl::sendGoalMessage(QString msg)
 {
     if (clientSocket && clientSocket->isOpen())

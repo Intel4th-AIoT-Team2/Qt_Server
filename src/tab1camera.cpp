@@ -104,8 +104,6 @@ void Tab1Camera::slotReadData() {
         if (!img.empty()) {
             processFrame(senderClient, img);  // 수신한 프레임을 처리
         }
-
-        cam1_image = img.clone();
     }
 }
 
@@ -124,6 +122,15 @@ void Tab1Camera::processFrame(QTcpSocket *client, cv::Mat& frame) {
         cv::imencode(".jpg", frame, buffer);
         QByteArray imageData(reinterpret_cast<const char*>(buffer.data()), buffer.size());
         sendFrame(imageData, client == clients[0] ? 1 : 2); // 1: CCTV1, 2: CCTV2
+    }
+
+    // Tab3 : 카메라 이미지 복사
+    if (client == clients[0])
+    {
+        cam1_image = frame.clone();
+    }
+    else {
+        cam2_image = frame.clone();
     }
 
     // QImage로 변환
@@ -170,9 +177,22 @@ void Tab1Camera::slotAppDisconnected() {
     }
 }
 
-void Tab1Camera::slotCopyCam1Image(cv::Mat& mat)
+void Tab1Camera::slotCopyCamImage(cv::Mat& mat, int cam, bool& ok)
 {
-    mat = cam1_image.clone();
+    if (cam == 2 && clients.size() == 2)
+    {
+        mat = cam2_image.clone();
+        ok = true;
+    }
+    else if (cam == 1 && clients.size() > 0)
+    {
+        mat = cam1_image.clone();
+        ok = true;
+    }
+    else
+    {
+        ok = false;
+    }
 }
 
 QTcpSocket* Tab1Camera::getClientSocket() const {

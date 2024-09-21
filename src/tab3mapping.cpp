@@ -17,18 +17,13 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
     point_list.append(&map_turtle1_points);
 
     // 터틀봇1 좌표
-    turtle1_points.push_back(cv::Point2f(-0.3, -2.33));
-    turtle1_points.push_back(cv::Point2f(-2.14, -0.094));
-    turtle1_points.push_back(cv::Point2f(1.8, 2.1));
-    turtle1_points.push_back(cv::Point2f(3.6, -0.058));
+    turtle1_points.push_back(cv::Point2f(-0.6, -1.44));     // Top-Left
+    turtle1_points.push_back(cv::Point2f(1.7, -1.57));      // Top-Right
+    turtle1_points.push_back(cv::Point2f(1.75, -6.18));     // Bottom-Right
+    turtle1_points.push_back(cv::Point2f(-1.2, -5.4));      // Bottom-Left
 
     // TODO: cam_image에는 선택한 카메라의 이미지(1장)가 표시되어야 함
-    cam1_image = cv::imread("/home/ubuntu/catkin_ws/src/fire_robot/room.png");
     map_image = cv::imread(map_path.toStdString());
-
-    readConfig();
-    getPerspectiveTransform();
-    drawCorners();
 
     ui->labelCamView->installEventFilter(this);
     ui->labelMapView->installEventFilter(this);
@@ -36,13 +31,15 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
 
     // 객체 탐지 프로그램 연결
     server = new QTcpServer(this);
-    server->listen(QHostAddress::Any, 5004);
+    server->listen(QHostAddress::Any, 5020);
     connect(server, SIGNAL(newConnection()), this, SLOT(onClientConnect()));
+    qDebug().noquote() << currentTime() << "YOLO client listen on port 5020";
 
     connect(ui->btnCamMapConnect, SIGNAL(clicked(bool)), this, SLOT(onBtnCamMapConnectClicked(bool)));
     connect(ui->btnMapAreaSet, SIGNAL(clicked(bool)), this, SLOT(onBtnMapAreaSetClicked(bool)));
     connect(ui->btnCam1Select, SIGNAL(clicked()), this, SLOT(onBtnCam1SelectClicked()));
     connect(ui->btnCam2Select, SIGNAL(clicked()), this, SLOT(onBtnCam2SelectClicked()));
+    connect(ui->btnRestoreSetting, SIGNAL(clicked()), this, SLOT(onBtnRestoreSettingClicked()));
     connect(this, SIGNAL(signalMapEdited()), this, SLOT(onMapEdited()));
 }
 
@@ -185,7 +182,7 @@ void Tab3Mapping::updateImageView(cv::Mat &image, QLabel *label)
 /* 선택한 영역을 이미지에 표시 */
 void Tab3Mapping::drawCorners()
 {
-    cv::Mat temp_cam_image = cam1_image.clone();
+    cv::Mat temp_cam_image = cam_image.clone();
     cv::Mat temp_map_image = map_image.clone();
     std::vector<cv::Point2f> temp_cam_points;
     std::vector<cv::Point2f> temp_map_points;
@@ -289,14 +286,14 @@ void Tab3Mapping::getPerspectiveTransform()
 }
 
 /* 설정 읽기 */
-void Tab3Mapping::readConfig()
+bool Tab3Mapping::readConfig()
 {
     // open file
     QFile file(config_path);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "file not exist.";
-        return;
+        ui->labelInfoText->setText("설정 파일이 존재하지 않습니다.");
+        return false;
     }
 
     // read file
@@ -330,6 +327,8 @@ void Tab3Mapping::readConfig()
     map_turtle1_transform_array = cv::getPerspectiveTransform(map_turtle1_points, turtle1_points);
 
     file.close();
+
+    return true;
 }
 
 /* 설정 기록 */
@@ -380,10 +379,17 @@ bool Tab3Mapping::isCamMapReady(int num)
 }
 
 /* 모든 설정이 완료되어 좌표 전송이 준비된 상태의 여부 */
-bool Tab3Mapping::isMappingDone()
+bool Tab3Mapping::isMappingDone(int cam)
 {
-    // return isCamMapReady(1) && isCamMapReady(2) && isMapAreaReady();
-    return isCamMapReady(1) && map_turtle1_points.size() == 4;
+    switch (cam)
+    {
+    case 1:
+        return isCamMapReady(1) && map_turtle1_points.size() == 4;
+    case 2:
+        return isCamMapReady(2) && map_turtle1_points.size() == 4;
+    default:
+        return false;
+    }
 }
 
 /* 터틀봇의 지도 좌표로 변환 */
@@ -392,12 +398,6 @@ QString Tab3Mapping::convertPointToTurtle(cv::Point2f cam_point, int cam_number)
     QString str;
     std::vector<cv::Point2f> cam, map, turtle;  // 카메라 좌표, 지도 위 좌표, 터틀봇 좌표
     cam.push_back(cam_point);
-
-    if (!isMappingDone())
-    {
-        str = "ERROR@Mapping not done";
-        return str;
-    }
 
     if (cam_number == 1)
     {
@@ -490,18 +490,60 @@ void Tab3Mapping::onBtnMapAreaSetClicked(bool checked)
 /* SLOT : "카메라1" 버튼 클릭 이벤트 */
 void Tab3Mapping::onBtnCam1SelectClicked()
 {
-    emit signalRequestCam1Image(cam1_image);
-    current_cam = 1;
-    drawCorners();
-    ui->labelInfoText->setText("카메라1이(가) 선택되었습니다.");
+    bool ok;
+
+    emit signalRequestCamImage(cam_image, 1, ok);
+
+    if (ok)
+    {
+        current_cam = 1;
+        drawCorners();
+        ui->labelInfoText->setText(QString("카메라%1이(가) 선택되었습니다.").arg(current_cam));
+    }
+    else
+    {
+        ui->labelInfoText->setText(QString("카메라%1 이미지를 가져올 수 없습니다.").arg(current_cam));
+    }
 }
 
 /* SLOT : "카메라2" 버튼 클릭 이벤트 */
 void Tab3Mapping::onBtnCam2SelectClicked()
 {
-    current_cam = 2;
-    drawCorners();
-    ui->labelInfoText->setText("카메라2이(가) 선택되었습니다.");
+    bool ok;
+
+    emit signalRequestCamImage(cam_image, 2, ok);
+
+    if (ok)
+    {
+        current_cam = 2;
+        drawCorners();
+        ui->labelInfoText->setText(QString("카메라%1이(가) 선택되었습니다.").arg(current_cam));
+    }
+    else
+    {
+        ui->labelInfoText->setText(QString("카메라%1 이미지를 가져올 수 없습니다.").arg(current_cam));
+    }
+}
+
+void Tab3Mapping::onBtnRestoreSettingClicked()
+{
+    bool ok;
+
+    // get camera image
+    emit signalRequestCamImage(cam_image, current_cam, ok);
+    if (!ok)
+    {
+        ui->labelInfoText->setText(QString("카메라%1 이미지를 가져올 수 없습니다.").arg(current_cam));
+        return;
+    }
+
+    // read config from file
+    if (readConfig())
+    {
+        getPerspectiveTransform();
+        drawCorners();
+        ui->labelInfoText->setText("설정을 가져왔습니다.");
+    }
 }
 
 /* SLOT : 지도 영역 수정 시 이벤트 */
@@ -523,7 +565,7 @@ void Tab3Mapping::onClientConnect()
     connect(newClient, SIGNAL(readyRead()), this, SLOT(readClientSocket()));
     connect(newClient, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
 
-    qDebug() << "Python client connected";
+    qDebug().noquote() << currentTime() << "Python client connected";
 }
 
 /* SLOT : 소켓으로부터 데이터 읽기 */
@@ -553,9 +595,7 @@ void Tab3Mapping::readClientSocket()
                 cv::Point2f fire = cv::Point2f(str_list[1].toFloat(), str_list[2].toFloat());
                 int cam = str_list[3].toInt();
 
-                // TODO: 실제 좌표 보내보기
-                qDebug() << fire.x << fire.y << cam;
-//                slotReceiveFirePoint(fire, cam);
+                slotReceiveFirePoint(fire, cam);
             }
 
             // 다음 메시지 준비
@@ -572,12 +612,43 @@ void Tab3Mapping::onClientDisconnected()
     if (sender_client)
     {
         sender_client->deleteLater();
-        qDebug() << "Python client disconnected";
+        qDebug().noquote() << currentTime() << "Python client disconnected";
     }
 }
 
 /* SLOT : 화재 좌표 수신 시 */
 void Tab3Mapping::slotReceiveFirePoint(cv::Point2f fire, int cam)
 {
-    emit signalTargetFound(convertPointToTurtle(fire, cam));
+    if (is_turtle_busy)
+    {
+        qDebug().noquote() << currentTime() << "Received fire point, but turtlebot is busy now.";
+    }
+    else if (cam == 1 && !isMappingDone(1))
+    {
+        qDebug().noquote() << currentTime() << "Received fire point, but cam1 is not mapped.";
+    }
+    else if (cam == 2 && !isMappingDone(2))
+    {
+        qDebug().noquote() << currentTime() << "Received fire point, but cam2 is not mapped.";
+    }
+    else
+    {
+        // TODO: 실제 좌표 보내기
+//        emit signalTargetFound(convertPointToTurtle(fire, cam));
+        qDebug().noquote() << currentTime() << convertPointToTurtle(fire, cam);
+        is_turtle_busy = true;
+    }
+}
+
+/* SLOT : 소화 완료 메시지 수신 시 */
+void Tab3Mapping::slotReceiveFinishMessage()
+{
+    is_turtle_busy = false;
+}
+
+QString Tab3Mapping::currentTime()
+{
+    QDateTime date_time = QDateTime::currentDateTime();
+
+    return date_time.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
 }

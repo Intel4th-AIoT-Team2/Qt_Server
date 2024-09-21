@@ -18,13 +18,14 @@ MainWidget::MainWidget(int argc, char** argv, QWidget *parent)
 
     ui->pTabWidget->setCurrentIndex(0);
 
-    connect(pTab2RosControl, SIGNAL(asd(QString)), pTab2RosControl, SLOT(sendGoalMessage(QString)));
     // copy cam1 to tab3
-    connect(pTab3Mapping, SIGNAL(signalRequestCam1Image(cv::Mat&)), pTab1Camera, SLOT(slotCopyCam1Image(cv::Mat&)));
+    connect(pTab3Mapping, SIGNAL(signalRequestCamImage(cv::Mat&, int, bool&)), pTab1Camera, SLOT(slotCopyCamImage(cv::Mat&, int, bool&)));
     // send goal message
     connect(pTab3Mapping, SIGNAL(signalTargetFound(QString)), pTab2RosControl, SLOT(sendGoalMessage(QString)));
     // send goal message to tab2
     connect(pTab3Mapping, SIGNAL(signalTargetFound(QString)), pTab2RosControl, SLOT(sendBuzzerOn(QString)));
+    // On receive finish message, resume detection.
+    connect(pTab2RosControl, SIGNAL(sigFireFinish()), pTab3Mapping, SLOT(slotReceiveFinishMessage()));
 }
 
 MainWidget::~MainWidget()
