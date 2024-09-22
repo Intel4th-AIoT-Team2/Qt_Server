@@ -37,9 +37,9 @@ private:
     cv::Mat rosImg;
     int connectionCount = 0;
     QTcpServer *imgServer;
-    QTcpSocket *imgClientSocket;
+    QTcpSocket *imgClientSocket = nullptr;
     QTcpServer *buzzerServer;
-    QTcpSocket *buzzerClientSocket;
+    QTcpSocket *buzzerClientSocket = nullptr;
 
 private slots:
     void slotLdsReceive(float *);
