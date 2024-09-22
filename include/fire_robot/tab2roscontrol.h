@@ -38,6 +38,8 @@ private:
     int connectionCount = 0;
     QTcpServer *imgServer;
     QTcpSocket *imgClientSocket;
+    QTcpServer *buzzerServer;
+    QTcpSocket *buzzerClientSocket;
 
 private slots:
     void slotLdsReceive(float *);
@@ -51,6 +53,7 @@ private slots:
     void sendImageViaTcp(QTcpSocket*, const cv::Mat&);
     void sendImageInChunks(QTcpSocket*, const cv::Mat&);
     void slotNewImageConnection();
+    void slotBuzzerConnection();
     void sendBuzzerOn(QString);
 
 signals:

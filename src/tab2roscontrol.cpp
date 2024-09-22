@@ -28,6 +28,14 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, Tab1Camera *tab1Camera, QW
     } else {
         qDebug() << "Sever - tab2 - 5010번 포트 연결";
     }
+    // 화재 알림 장치 데이터 전송하기 위한 서버
+    buzzerServer = new QTcpServer(this);
+    if (!buzzerServer->listen(QHostAddress::Any, 5011)) {
+        qCritical() << "Sever - tab2 - 5011번 포트 에러 : " << buzzerServer->errorString();
+    } else {
+        qDebug() << "Sever - tab2 - 5011번 포트 연결";
+    }
+
     // 버튼 클릭 시, 하드 코딩된 좌표 값을 터틀봇에 전달
     connect(ui->sendBtn, SIGNAL(clicked()),this, SLOT(sendData()));
     connect(prosNode, SIGNAL(sigLdsReceive(float *)),this, SLOT(slotLdsReceive(float *)));
@@ -39,10 +47,32 @@ Tab2RosControl::Tab2RosControl(int argc, char **argv, Tab1Camera *tab1Camera, QW
     connect(server, SIGNAL(newConnect(QTcpSocket*)), this, SLOT(saveSocket(QTcpSocket*)));
     // Ros 이미지 서버의 소켓 저장
     connect(imgServer, SIGNAL(newConnection()), this, SLOT(slotNewImageConnection()));
+    // Ros 이미지 서버의 소켓 저장
+    connect(buzzerServer, SIGNAL(newConnection()), this, SLOT(slotBuzzerConnection()));
 }
 
 Tab2RosControl::~Tab2RosControl()
 {
+    // 활성화가 되어 있다면 닫기
+    if (buzzerClientSocket && buzzerClientSocket->isOpen()) {
+        buzzerClientSocket->disconnectFromHost();
+        buzzerClientSocket->close();
+    }
+
+    if (imgClientSocket && imgClientSocket->isOpen()) {
+        imgClientSocket->disconnectFromHost();
+        imgClientSocket->close();
+    }
+
+    if (clientSocket && clientSocket->isOpen()) {
+        clientSocket->disconnectFromHost();
+        clientSocket->close();
+    }
+
+    // 할당된 자원을 해제합니다.
+    delete prosNode;
+    delete server;
+    delete imgServer;
     delete ui;
 }
 // Ros 스캔 데이터 UI에 표시
@@ -58,23 +88,21 @@ void Tab2RosControl::slotLdsReceive(float *pscanData)
 void Tab2RosControl::sendBuzzerOn(QString temp)
 {
     qDebug() << "Server - tab2 - sendBuzzerOn";
-    // Tab1의 CCTV1 소켓 저장
-    QTcpSocket* clientSocket = m_tab1Camera->getClientSocket();
 
     QString message = "buzzer_on";
 
     // 소켓이 존재하고 열려 있는지 확인
-    if (!clientSocket) {
+    if (!buzzerClientSocket) {
         qCritical() << "Server - tab2 - sendBuzzerOn - 소켓 없음";
         return;
     }
 
-    if (!clientSocket->isOpen()) {
+    if (!buzzerClientSocket->isOpen()) {
         qCritical() << "Server - tab2 - sendBuzzerOn - 오픈 에러";
         return;
     }
 
-    clientSocket->write(message.toUtf8());
+    buzzerClientSocket->write(message.toUtf8());
 
     qDebug() << "Server - tab2 - sendBuzzerOn - message : " << message;
 
@@ -91,23 +119,21 @@ void Tab2RosControl::sendBuzzerOn(QString temp)
 void Tab2RosControl::sendBuzzerOff()
 {
     qDebug() << "Server - tab2 - sendBuzzerOff";
-    // Tab1의 CCTV1 소켓 저장
-    QTcpSocket* clientSocket = m_tab1Camera->getClientSocket();
 
     QString message = "buzzer_off";
 
     // 소켓이 존재하고 열려 있는지 확인
-    if (!clientSocket) {
+    if (!buzzerClientSocket) {
         qCritical() << "Server - tab2 - sendBuzzerOff - 소켓 없음";
         return;
     }
 
-    if (!clientSocket->isOpen()) {
+    if (!buzzerClientSocket->isOpen()) {
         qCritical() << "Server - tab2 - sendBuzzerOff - 오픈 에러";
         return;
     }
 
-    clientSocket->write(message.toUtf8());
+    buzzerClientSocket->write(message.toUtf8());
 
     qDebug() << "Server - tab2 - sendBuzzerOff - message : " << message;
 }
@@ -232,6 +258,16 @@ void Tab2RosControl::slotNewImageConnection()
     connect(imgClientSocket, SIGNAL(disconnected()), imgClientSocket, SLOT(deleteLater()));
 
     qDebug() << "이미지 소켓 연결 완료" << imgClientSocket->peerAddress().toString();
+}
+// 화재 알림 장치 소켓 저장
+void Tab2RosControl::slotBuzzerConnection()
+{
+    buzzerClientSocket = buzzerServer->nextPendingConnection();
+
+    connect(buzzerClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadData()));
+    connect(buzzerClientSocket, SIGNAL(disconnected()), buzzerClientSocket, SLOT(deleteLater()));
+
+    qDebug() << "부저 소켓 연결 완료" << buzzerClientSocket->peerAddress().toString();
 }
 // 화재 진압 후 복귀 명령 시, 시그널 발생 및 부저 OFF
 void Tab2RosControl::slotRosReadData()
