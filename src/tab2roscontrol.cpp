@@ -73,6 +73,7 @@ Tab2RosControl::~Tab2RosControl()
     delete prosNode;
     delete server;
     delete imgServer;
+    delete buzzerServer;
     delete ui;
 }
 // Ros 스캔 데이터 UI에 표시
