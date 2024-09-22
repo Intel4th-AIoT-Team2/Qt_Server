@@ -13,7 +13,7 @@ Tab3Mapping::Tab3Mapping(QWidget *parent)
     point_list.append(&cam1_points);
     point_list.append(&map1_points);
     point_list.append(&cam2_points);
-    point_list.append(&cam2_points);
+    point_list.append(&map2_points);
     point_list.append(&map_turtle1_points);
 
     // 터틀봇1 좌표
@@ -323,8 +323,21 @@ bool Tab3Mapping::readConfig()
         idx += 1;
     }
 
-    cam_map1_transform_array = cv::getPerspectiveTransform(cam1_points, map1_points);
-    map_turtle1_transform_array = cv::getPerspectiveTransform(map_turtle1_points, turtle1_points);
+    if (isCamMapReady(1))
+    {
+        cam_map1_transform_array = cv::getPerspectiveTransform(cam1_points, map1_points);
+        qDebug() << "CamMap1";
+    }
+    if (isCamMapReady(2))
+    {
+        cam_map2_transform_array = cv::getPerspectiveTransform(cam2_points, map2_points);
+        qDebug() << "CamMap2";
+    }
+    if (map_turtle1_points.size() == 4)
+    {
+        map_turtle1_transform_array = cv::getPerspectiveTransform(map_turtle1_points, turtle1_points);
+        qDebug() << "Turtle";
+    }
 
     file.close();
 
